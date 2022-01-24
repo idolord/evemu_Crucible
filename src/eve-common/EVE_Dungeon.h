@@ -165,6 +165,8 @@ namespace Dungeon {
         uint16 dunEntryID;
         int32 dunRoomID;
         std::string dunName;
+        std::string dunDescription;
+        uint32 dunFactionID;
     };
 
     struct RoomInfo {
@@ -173,6 +175,18 @@ namespace Dungeon {
         uint8 dunRoomSpawnID;
         uint8 dunRoomSpawnType;
         uint16 dunRoomID;
+    };
+
+    struct RoomObject {
+        uint32 roomID;
+        uint32 typeID;
+        int16 x;
+        int16 y;
+        int16 z;
+        double yaw;
+        double pitch;
+        double roll;
+        uint16 radius;
     };
 
     struct RoomData {

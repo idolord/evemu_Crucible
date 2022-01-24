@@ -45,6 +45,7 @@
 #include "PyServiceCD.h"
 #include "system/KeeperService.h"
 #include "system/SystemManager.h"
+#include "dungeon/DungeonDB.h"
 
 class KeeperBound
 : public PyBoundObject
@@ -173,13 +174,40 @@ PyResult KeeperService::Handle_ActivateAccelerationGate(PyCallArgs &call) {
     return new PyLong(Win32TimeNow());
 }
 
-
-
 PyResult KeeperBound::Handle_EditDungeon(PyCallArgs &call)
 {
     //ed.EditDungeon(dungeonID, roomID=roomID)
     _log(DUNG__CALL,  "KeeperBound::Handle_EditDungeon  size: %li", call.tuple->size());
     call.Dump(DUNG__CALL_DUMP);
+
+    /*
+    Tasks to accomplish
+    1. Set current position as 0,0,0 in room
+    2. Load all room objects from dunRoomObjects into a vector
+    3. Spawn all room objects using their relative positions from 0,0,0
+    */
+
+    Client *pClient(call.client);
+
+    GPoint roomPos = pClient->GetShipSE()->GetPosition();
+
+    std::vector<Dungeon::RoomObject> objects;
+    DungeonDB::GetRoomObjects(call.byname["roomID"]->AsInt()->value(), objects);
+
+    // Spawn the items in the object list
+    for (auto cur : objects) {
+        GPoint objPos;
+        objPos.x = roomPos.x + cur.x;
+        objPos.y = roomPos.y + cur.y;
+        objPos.z = roomPos.z + cur.z;
+
+        ItemData dData(cur.typeID, sig.ownerID, pClient->GetLocationID(), flagNone, objPos);
+        iRef = InventoryItem::SpawnItem(sItemFactory.GetNextTempID(), dData);
+        if (iRef.get() == nullptr) // Failed to spawn the item
+            continue;
+        oSE = new ItemSystemEntity(iRef, *(m_system->GetServiceMgr()), m_system);
+        m_system->AddEntity(oSE, false);
+    }
 
     return nullptr;
 }
@@ -217,4 +245,3 @@ PyResult KeeperBound::Handle_GetCurrentlyEditedRoomID(PyCallArgs &call)
 
     return nullptr;
 }
-

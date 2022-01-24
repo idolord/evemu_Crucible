@@ -44,7 +44,8 @@
 #include "PyServiceCD.h"
 #include "dungeon/DungeonService.h"
 #include "dungeon/DungeonDB.h"
-
+#include "system/cosmicMgrs/DungeonMgr.h"
+#include "packets/Missions.h"
 
 PyCallable_Make_InnerDispatcher(DungeonService)
 
@@ -79,6 +80,27 @@ DungeonService::DungeonService(PyServiceMgr *mgr)
     PyCallable_REG_CALL(DungeonService, DEGetRoomObjectPaletteData);
 }
 
+/*
+== How Dungeons Are Organized ==
+
+Dungeons
+Templates
+Rooms
+Types
+Factions
+Groups
+Objects
+
+According to client/dungeonEditor:
+
+Archetype ->  Dungeon -> Room -> Template -> Object
+ / faction            -> Room -> Template -> Object
+                      -> Room -> Template -> Object
+              Dungeon -> Room -> Template -> Object
+                      -> Room -> Template -> Object
+                      -> Room -> Template -> Object
+
+*/
 
 DungeonService::~DungeonService() {
     delete m_dispatch;
@@ -221,7 +243,10 @@ PyResult DungeonService::Handle_GetArchetypes( PyCallArgs& call )
     _log(DUNG__CALL,  "DungeonService::Handle_GetArchetypes  size: %li", call.tuple->size());
     call.Dump(DUNG__CALL_DUMP);
 
-    return nullptr;
+    DBQueryResult res;
+    DungeonDB::GetArchetypes(res);
+
+    return DBResultToCRowset(res);
 }
 
 PyResult DungeonService::Handle_DEGetDungeons( PyCallArgs& call )
@@ -233,7 +258,7 @@ PyResult DungeonService::Handle_DEGetDungeons( PyCallArgs& call )
 
     //PyRep *result = NULL;
     //dict args:
-    // factionID
+    // archetypeID, factionID
     // or dungeonVID
 
     // rows: status (1=RELEASE,2=TESTING,else Working Copy),
@@ -243,12 +268,21 @@ PyResult DungeonService::Handle_DEGetDungeons( PyCallArgs& call )
     _log(DUNG__CALL,  "DungeonService::Handle_DEGetDungeons  size: %li", call.tuple->size());
     call.Dump(DUNG__CALL_DUMP);
 
-    return nullptr;
+    DBQueryResult res;
+
+    if (call.tuple->size() == 0) { // No args
+        DungeonDB::GetDungeons(res);
+    } else if (call.tuple->size() == 1) { // dungeonID
+        DungeonDB::GetDungeons(call.byname["dungeonID"]->AsInt()->value(), res);
+    } else if (call.tuple->size() == 2) { // archetypeID, factionID
+        DungeonDB::GetDungeons(call.byname["archetypeID"]->AsInt()->value(), call.byname["factionID"]->AsInt()->value(), res);
+    }
+    return DBResultToCRowset(res);
 }
 
 PyResult DungeonService::Handle_DEGetTemplates( PyCallArgs& call )
 {
-/*
+        /*
         self.templateRows = sm.RemoteSvc('dungeon').DEGetTemplates()
         for row in self.templateRows:
             data = {'label': row.templateName,
@@ -260,7 +294,10 @@ PyResult DungeonService::Handle_DEGetTemplates( PyCallArgs& call )
     _log(DUNG__CALL,  "DungeonService::Handle_DEGetTemplates  size: %li", call.tuple->size());
     call.Dump(DUNG__CALL_DUMP);
 
-    return nullptr;
+    DBQueryResult res;
+    DungeonDB::GetTemplates(res);
+
+    return DBResultToCRowset(res);
 }
 
 
@@ -275,18 +312,25 @@ PyResult DungeonService::Handle_DEGetRooms( PyCallArgs& call )
     _log(DUNG__CALL,  "DungeonService::Handle_DEGetRooms  size: %li", call.tuple->size());
     call.Dump(DUNG__CALL_DUMP);
 
-    return nullptr;
+    DBQueryResult res;
+    DungeonDB::GetRooms(call.byname["dungeonID"]->AsInt()->value(), res);
+
+    return DBResultToCRowset(res);
 }
 
 PyResult DungeonService::Handle_DEGetRoomObjectPaletteData( PyCallArgs& call )
 {
-    /*  roomObjectGroups = sm.RemoteSvc('dungeon').DEGetRoomObjectPaletteData()
+    /* Object Pallete Data = Object Groups 
+     * roomObjectGroups = sm.RemoteSvc('dungeon').DEGetRoomObjectPaletteData()
      * id, name  in either dict or list (client can process both)
      */
     _log(DUNG__CALL,  "DungeonService::Handle_DEGetRoomObjectPaletteData  size: %li", call.tuple->size());
     call.Dump(DUNG__CALL_DUMP);
 
-    return nullptr;
+    DBQueryResult res;
+    DungeonDB::GetGroups(res);
+
+    return DBResultToCRowset(res);
 }
 
 PyResult DungeonService::Handle_DEGetFactions( PyCallArgs& call )
@@ -297,7 +341,9 @@ PyResult DungeonService::Handle_DEGetFactions( PyCallArgs& call )
     _log(DUNG__CALL,  "DungeonService::Handle_DEGetFactions  size: %li", call.tuple->size());
     call.Dump(DUNG__CALL_DUMP);
 
-    return nullptr;
+    DBQueryResult res;
+    DungeonDB::GetFactions(res);
+    return DBResultToCRowset(res);
 }
 
 

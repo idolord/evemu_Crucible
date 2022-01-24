@@ -167,10 +167,12 @@ void AnomalyMgr::Process() {
         // Only generate new signals when a player is in the system
         if (m_system->PlayerCount() > 0) {
             // ensure that all wormholes are created at the beginning when the system is loaded
-            auto it = find(m_typeList.begin(), m_typeList.end(), Dungeon::Type::Wormhole);
-            if (it != m_typeList.end()) {
-                m_typeList.erase(m_typeList.begin()+(it - m_typeList.begin()));
-                CreateAnomaly(Dungeon::Type::Wormhole);
+            if (m_WH == 0) {
+                auto it = find(m_typeList.begin(), m_typeList.end(), Dungeon::Type::Wormhole);
+                if (it != m_typeList.end()) {
+                    m_typeList.erase(m_typeList.begin()+(it - m_typeList.begin()));
+                    CreateAnomaly(Dungeon::Type::Wormhole);
+                }
             }
             if (m_Sigs < m_maxSigs)
                 CreateAnomaly();
@@ -227,6 +229,10 @@ void AnomalyMgr::LoadAnomalies() {
         m_sigBySigID.emplace(sig.sigID, sig);
         m_sigByItemID.emplace(sig.sigItemID, sig);
         ++m_Sigs;
+
+        if (sig.dungeonType == Dungeon::Type::Wormhole) {
+            m_WH++;
+        }
 
         _log(COSMIC_MGR__MESSAGE, "AnomalyMgr::LoadAnomalies() - Created Signal %s(%u) for %s in %s(%u), bubbleID %u with %.3f%% sigStrength.", \
         sDunDataMgr.GetDungeonType(sig.dungeonType), sig.dungeonType, \
