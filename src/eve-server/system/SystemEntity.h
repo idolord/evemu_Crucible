@@ -78,6 +78,7 @@ class ReactorSE;
 class JumpBridgeSE;
 class PlatformSE;
 class OutpostSE;
+class DungeonEditSE;
 
 /*
  * base class for all SystemEntities  - no TargetMgr or DestinyMgr
@@ -157,6 +158,7 @@ public:
     virtual Missile*            GetMissileSE()          { return nullptr; }
     virtual ShipSE*             GetShipSE()             { return nullptr; }
     virtual Concord*            GetConcordSE()          { return nullptr; }
+    virtual DungeonEditSE*      GetDungeonEditSE()      { return nullptr; }
 
     /* class type tests, grouped by base class.  public for anyone to access. */
     /* Base */
@@ -211,6 +213,7 @@ public:
     virtual bool                IsMissileSE()           { return false; }
     virtual bool                IsShipSE()              { return false; }
     virtual bool                IsConcord()             { return false; }
+    virtual bool                IsDungeonEditSE()       { return false; }
 
     /* generic functions handled here */
     PyServiceMgr&               GetServices()           { return m_services; }
@@ -579,7 +582,6 @@ public:
 };
 
 
-
 /* Non-Static / Mobile / Destructible / Celestial Objects
  *- Drones, Ships, Missiles, Wrecks
  * - has TargetMgr and DestinyMgr*/
@@ -628,6 +630,27 @@ public:
 private:
     bool m_invul;
     bool m_frozen;
+};
+
+class DungeonEditSE : public ItemSystemEntity {
+public:
+    DungeonEditSE(InventoryItemRef self, PyServiceMgr &services, SystemManager* system, Dungeon::RoomObject data);
+    virtual ~DungeonEditSE()                                { /* Do nothing here */ }
+
+    /* class type pointer querys. */
+    virtual DungeonEditSE*      GetDungeonEditSE()          { return this; }
+    /* class type tests. */
+    /* Base */
+    virtual bool                IsDungeonEditSE()           { return true; }
+    Dungeon::RoomObject         GetData()                   { return m_data; }
+
+    /* SystemEntity interface */
+    //virtual void                EncodeDestiny( Buffer& into );
+
+    virtual PyDict*             MakeSlimItem();
+
+    Dungeon::RoomObject m_data;
+
 };
 
 

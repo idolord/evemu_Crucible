@@ -87,11 +87,23 @@ void DungeonDB::GetGroups(DBQueryResult& res)
     _log(DATABASE__ERROR, "Error in GetFactions query: %s", res.error.c_str());
 }
 
+PyRep* DungeonDB::GetRoomGroups(uint32 roomID)
+{
+    DBQueryResult res;
+
+    if (!sDatabase.RunQuery(res, "SELECT dunRoomObjects.groupID as selectionGroupID, groupName as selectionGroupName "
+    "FROM dunRoomObjects, dunGroups "
+    "WHERE dunRoomObjects.groupID = dunGroups.groupID AND roomID=%u GROUP BY dunRoomObjects.groupID", roomID))
+    _log(DATABASE__ERROR, "Error in GetRoomGroups query: %s", res.error.c_str());
+
+    return DBResultToCRowset(res);
+}
+
 void DungeonDB::GetRoomObjects(uint32 roomID, std::vector< Dungeon::RoomObject >& into)
 {
     DBQueryResult res;
 
-    if (!sDatabase.RunQuery(res, "SELECT roomID, typeID, x, y, z, yaw, pitch, roll, radius "
+    if (!sDatabase.RunQuery(res, "SELECT roomID, typeID, groupID, x, y, z, yaw, pitch, roll, radius "
     "FROM dunRoomObjects "
     "WHERE roomID=%u", roomID))
     _log(DATABASE__ERROR, "Error in GetRoomObjects query: %s", res.error.c_str());
@@ -103,13 +115,14 @@ void DungeonDB::GetRoomObjects(uint32 roomID, std::vector< Dungeon::RoomObject >
         Dungeon::RoomObject entry = Dungeon::RoomObject();
             entry.roomID = row.GetInt(0);
             entry.typeID = row.GetInt(1);
-            entry.x = row.GetInt(2);
-            entry.y = row.GetInt(3);
-            entry.z = row.GetInt(4);
-            entry.pitch = row.GetDouble(5);
-            entry.roll = row.GetDouble(6);
-            entry.yaw = row.GetDouble(7);
-            entry.radius = row.GetInt(8);
+            entry.groupID = row.GetInt(2);
+            entry.x = row.GetInt(3);
+            entry.y = row.GetInt(4);
+            entry.z = row.GetInt(5);
+            entry.pitch = row.GetDouble(6);
+            entry.roll = row.GetDouble(7);
+            entry.yaw = row.GetDouble(8);
+            entry.radius = row.GetInt(9);
         into.push_back(entry);
     }
 }

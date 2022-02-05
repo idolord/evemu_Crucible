@@ -179,10 +179,11 @@ namespace Dungeon {
 
     struct RoomObject {
         uint32 roomID;
-        uint32 typeID;
-        int16 x;
-        int16 y;
-        int16 z;
+        uint16 typeID;
+        uint16 groupID;
+        double x;
+        double y;
+        double z;
         double yaw;
         double pitch;
         double roll;

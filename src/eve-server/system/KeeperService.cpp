@@ -67,6 +67,8 @@ public:
         PyCallable_REG_CALL(KeeperBound, Reset);
         PyCallable_REG_CALL(KeeperBound, GotoRoom); //(int room)
         PyCallable_REG_CALL(KeeperBound, GetCurrentlyEditedRoomID);
+        PyCallable_REG_CALL(KeeperBound, GetRoomObjects);
+        PyCallable_REG_CALL(KeeperBound, GetRoomGroups);
 
     }
     virtual ~KeeperBound() { delete m_dispatch; }
@@ -80,10 +82,15 @@ public:
     PyCallable_DECL_CALL(Reset);
     PyCallable_DECL_CALL(GotoRoom);
     PyCallable_DECL_CALL(GetCurrentlyEditedRoomID);
+    PyCallable_DECL_CALL(GetRoomObjects);
+    PyCallable_DECL_CALL(GetRoomGroups);
 
 protected:
     SystemDB *const m_db;
     Dispatcher *const m_dispatch;   //we own this
+
+private:
+    std::vector<DungeonEditSE*> curRoomObjects;
 };
 
 
@@ -180,6 +187,12 @@ PyResult KeeperBound::Handle_EditDungeon(PyCallArgs &call)
     _log(DUNG__CALL,  "KeeperBound::Handle_EditDungeon  size: %li", call.tuple->size());
     call.Dump(DUNG__CALL_DUMP);
 
+    Call_SingleIntegerArg args;
+    if (!args.Decode(&call.tuple)) {
+        codelog(SERVICE__ERROR, "%s: Failed to decode arguments.", GetName());
+        return nullptr;
+    }
+
     /*
     Tasks to accomplish
     1. Set current position as 0,0,0 in room
@@ -201,15 +214,73 @@ PyResult KeeperBound::Handle_EditDungeon(PyCallArgs &call)
         objPos.y = roomPos.y + cur.y;
         objPos.z = roomPos.z + cur.z;
 
-        ItemData dData(cur.typeID, sig.ownerID, pClient->GetLocationID(), flagNone, objPos);
-        iRef = InventoryItem::SpawnItem(sItemFactory.GetNextTempID(), dData);
+        ItemData dData(cur.typeID, 1/*EVE SYSTEM*/, pClient->GetLocationID(), flagNone, "", objPos);
+        InventoryItemRef iRef = InventoryItem::SpawnItem(sItemFactory.GetNextTempID(), dData);
         if (iRef.get() == nullptr) // Failed to spawn the item
             continue;
-        oSE = new ItemSystemEntity(iRef, *(m_system->GetServiceMgr()), m_system);
-        m_system->AddEntity(oSE, false);
+        _log(DUNG__CALL,  "KeeperBound::Spawning  item: %s", iRef->itemName());
+        DungeonEditSE* oSE;
+        oSE = new DungeonEditSE(iRef, *(m_manager), pClient->SystemMgr(), cur);
+        curRoomObjects.push_back(oSE);
+        pClient->SystemMgr()->AddEntity(oSE, false);
     }
 
+    // Send notification to client to update UI
+    PyDict* posKeyVal = new PyDict();
+        posKeyVal->SetItemString("x", new PyFloat(roomPos.x));
+        posKeyVal->SetItemString("y", new PyFloat(roomPos.y));
+        posKeyVal->SetItemString("z", new PyFloat(roomPos.z));
+
+    PyTuple* payload = new PyTuple(3);
+    payload->SetItem(0, new PyInt(args.arg)); //dungeonID
+    payload->SetItem(1, new PyInt(call.byname["roomID"]->AsInt()->value())); //roomID
+    payload->SetItem(2, new PyObject("util.KeyVal", posKeyVal)); //roomPos
+
+    pClient->SendNotification("OnDungeonEdit", "charid", payload, false);
+
     return nullptr;
+}
+
+PyResult KeeperBound::Handle_GetRoomObjects(PyCallArgs &call)
+{
+    _log(DUNG__CALL,  "KeeperBound:::Handle_GetRoomObjects  size: %li", call.tuple->size());
+    call.Dump(DUNG__CALL_DUMP);
+
+    Call_SingleIntegerArg args;
+    if (!args.Decode(&call.tuple))
+    {
+        _log(SERVICE__ERROR, "%s: Failed to decode arguments.", GetName());
+        return nullptr;
+    }
+
+    DBRowDescriptor *header = new DBRowDescriptor();
+    header->AddColumn("objectID", DBTYPE_I4);
+    header->AddColumn("groupID", DBTYPE_I4);
+
+    CRowSet *rowset = new CRowSet(&header);
+
+    for (auto cur : curRoomObjects) {
+        PyPackedRow *newRow = rowset->NewRow();
+        newRow->SetField("objectID", new PyInt(cur->GetID()));
+        newRow->SetField("groupID", new PyInt(cur->GetData().groupID));
+    }
+
+    return rowset;
+}
+
+PyResult KeeperBound::Handle_GetRoomGroups( PyCallArgs& call )
+{
+    _log(DUNG__CALL,  "KeeperBound::Handle_GetRoomGroups  size: %li", call.tuple->size());
+    call.Dump(DUNG__CALL_DUMP);
+
+    Call_SingleIntegerArg args;
+    if (!args.Decode(&call.tuple))
+    {
+        _log(SERVICE__ERROR, "%s: Failed to decode arguments.", GetName());
+        return nullptr;
+    }
+
+    return DungeonDB::GetRoomGroups(args.arg);
 }
 
 PyResult KeeperBound::Handle_PlayDungeon(PyCallArgs &call)

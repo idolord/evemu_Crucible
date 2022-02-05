@@ -37,6 +37,7 @@ INSERT INTO dunRoomObjects
 VALUES (
     10001,              -- ID of the room
     9886,               -- TypeID of the item to be inserted
+    10000,              -- GroupID of the item
     15000,              -- x relative position
     3000,               -- y relative position
     1000,               -- z relative position
@@ -46,6 +47,13 @@ VALUES (
     10000               -- radius in meters
 );
 
+-- Create a group for the object to be in
+INSERT INTO dunGroups
+VALUES (
+    10000,
+    "Example Group"
+);
+
 -- +migrate Down
 DELETE FROM dunDungeons
     WHERE dungeonID=1200000000; -- Use the same Dungeon ID which was created in the 'migrate Up' section
@@ -53,3 +61,5 @@ DELETE FROM dunRooms
     WHERE dungeonID=1200000000;
 DELETE FROM dunRoomObjects
     WHERE roomID=10001;
+DELETE FROM dunGroups
+    WHERE groupID=10000;
