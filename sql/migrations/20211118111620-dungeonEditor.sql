@@ -28,7 +28,10 @@ CREATE TABLE dunDungeons (
     PRIMARY KEY (dungeonID));
 CREATE TABLE dunGroups (
     groupID INT(10) NOT NULL,
-    groupName VARCHAR(100) NOT NULL DEFAULT "");
+    groupName VARCHAR(100) NOT NULL DEFAULT "",
+    yaw DOUBLE NOT NULL DEFAULT 0,
+    pitch DOUBLE NOT NULL DEFAULT 0,
+    roll DOUBLE NOT NULL DEFAULT 0);
 CREATE TABLE dunRooms (
     roomID INT(10) NOT NULL,
     roomName VARCHAR(100) NOT NULL DEFAULT "",

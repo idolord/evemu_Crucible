@@ -51,7 +51,10 @@ VALUES (
 INSERT INTO dunGroups
 VALUES (
     10000,
-    "Example Group"
+    "Example Group",
+    0,
+    0,
+    0
 );
 
 -- +migrate Down

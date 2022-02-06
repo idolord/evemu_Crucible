@@ -69,6 +69,7 @@ public:
         PyCallable_REG_CALL(KeeperBound, GetCurrentlyEditedRoomID);
         PyCallable_REG_CALL(KeeperBound, GetRoomObjects);
         PyCallable_REG_CALL(KeeperBound, GetRoomGroups);
+        PyCallable_REG_CALL(KeeperBound, ObjectSelection);
 
     }
     virtual ~KeeperBound() { delete m_dispatch; }
@@ -84,6 +85,7 @@ public:
     PyCallable_DECL_CALL(GetCurrentlyEditedRoomID);
     PyCallable_DECL_CALL(GetRoomObjects);
     PyCallable_DECL_CALL(GetRoomGroups);
+    PyCallable_DECL_CALL(ObjectSelection);
 
 protected:
     SystemDB *const m_db;
@@ -91,6 +93,7 @@ protected:
 
 private:
     std::vector<DungeonEditSE*> curRoomObjects;
+    std::vector<int32> m_selectedObjects;
 };
 
 
@@ -218,7 +221,6 @@ PyResult KeeperBound::Handle_EditDungeon(PyCallArgs &call)
         InventoryItemRef iRef = InventoryItem::SpawnItem(sItemFactory.GetNextTempID(), dData);
         if (iRef.get() == nullptr) // Failed to spawn the item
             continue;
-        _log(DUNG__CALL,  "KeeperBound::Spawning  item: %s", iRef->itemName());
         DungeonEditSE* oSE;
         oSE = new DungeonEditSE(iRef, *(m_manager), pClient->SystemMgr(), cur);
         curRoomObjects.push_back(oSE);
@@ -315,4 +317,30 @@ PyResult KeeperBound::Handle_GetCurrentlyEditedRoomID(PyCallArgs &call)
     call.Dump(DUNG__CALL_DUMP);
 
     return nullptr;
+}
+
+PyResult KeeperBound::Handle_ObjectSelection(PyCallArgs &call)
+{
+    _log(DUNG__CALL,  "KeeperBound::Handle_ObjectSelection  size: %li", call.tuple->size());
+    call.Dump(DUNG__CALL_DUMP);
+
+    Call_SingleIntList args;
+    if (!args.Decode(&call.tuple))
+    {
+        _log(SERVICE__ERROR, "%s: Failed to decode arguments.", GetName());
+        return nullptr;
+    }
+
+    this->m_selectedObjects = args.ints;
+
+    // a copy of the list has to be returned, otherwise the client won't know what they're selecting
+    // i feel like this would be handled client-side if the jessica package was loaded
+    // but i have no real idea... so the server it is
+    PyTuple* data = args.Encode();
+
+    PyRep* result = data->GetItem(0);
+
+    PySafeDecRef(data);
+
+    return result;
 }

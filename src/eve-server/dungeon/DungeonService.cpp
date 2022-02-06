@@ -113,7 +113,14 @@ PyResult DungeonService::Handle_IsObjectLocked( PyCallArgs& call )
     _log(DUNG__CALL,  "DungeonService::Handle_IsObjectLocked size: %li", call.tuple->size());
     call.Dump(DUNG__CALL_DUMP);
 
-    return nullptr;
+    // TODO: IMPLEMENT THE LOCKING MECHANISM
+
+    PyTuple* result = new PyTuple(2);
+
+    result->SetItem(0, new PyBool(false));
+    result->SetItem(1, new PyList());
+
+    return result;
 }
 
 PyResult DungeonService::Handle_AddObject( PyCallArgs& call )

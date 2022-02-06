@@ -91,10 +91,20 @@ PyRep* DungeonDB::GetRoomGroups(uint32 roomID)
 {
     DBQueryResult res;
 
-    if (!sDatabase.RunQuery(res, "SELECT dunRoomObjects.groupID as selectionGroupID, groupName as selectionGroupName "
-    "FROM dunRoomObjects, dunGroups "
-    "WHERE dunRoomObjects.groupID = dunGroups.groupID AND roomID=%u GROUP BY dunRoomObjects.groupID", roomID))
-    _log(DATABASE__ERROR, "Error in GetRoomGroups query: %s", res.error.c_str());
+    if (!sDatabase.RunQuery(res,
+            "SELECT "
+                " groupID AS selectionGroupID,"
+                " groupName AS selectionGroupName,"
+                " dunGroups.yaw,"
+                " dunGroups.pitch,"
+                " dunGroups.roll"
+            " FROM dunRoomObjects "
+            " INNER JOIN dunGroups USING (groupID)"
+            " WHERE roomID = %u"
+            " GROUP BY groupID"))
+    {
+        _log(DATABASE__ERROR, "Error in GetRoomGroups query: %s", res.error.c_str());
+    }
 
     return DBResultToCRowset(res);
 }
