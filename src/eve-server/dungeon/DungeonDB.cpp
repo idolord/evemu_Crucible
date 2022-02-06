@@ -113,7 +113,7 @@ void DungeonDB::GetRoomObjects(uint32 roomID, std::vector< Dungeon::RoomObject >
 {
     DBQueryResult res;
 
-    if (!sDatabase.RunQuery(res, "SELECT roomID, typeID, groupID, x, y, z, yaw, pitch, roll, radius "
+    if (!sDatabase.RunQuery(res, "SELECT objectID, roomID, typeID, groupID, x, y, z, yaw, pitch, roll, radius "
     "FROM dunRoomObjects "
     "WHERE roomID=%u", roomID))
     _log(DATABASE__ERROR, "Error in GetRoomObjects query: %s", res.error.c_str());
@@ -123,18 +123,41 @@ void DungeonDB::GetRoomObjects(uint32 roomID, std::vector< Dungeon::RoomObject >
 
     while(res.GetRow(row)) {
         Dungeon::RoomObject entry = Dungeon::RoomObject();
-            entry.roomID = row.GetInt(0);
-            entry.typeID = row.GetInt(1);
-            entry.groupID = row.GetInt(2);
-            entry.x = row.GetInt(3);
-            entry.y = row.GetInt(4);
-            entry.z = row.GetInt(5);
-            entry.pitch = row.GetDouble(6);
-            entry.roll = row.GetDouble(7);
-            entry.yaw = row.GetDouble(8);
-            entry.radius = row.GetInt(9);
+            entry.objectID = row.GetInt(0);
+            entry.roomID = row.GetInt(1);
+            entry.typeID = row.GetInt(2);
+            entry.groupID = row.GetInt(3);
+            entry.x = row.GetInt(4);
+            entry.y = row.GetInt(5);
+            entry.z = row.GetInt(6);
+            entry.pitch = row.GetDouble(7);
+            entry.roll = row.GetDouble(8);
+            entry.yaw = row.GetDouble(9);
+            entry.radius = row.GetInt(10);
         into.push_back(entry);
     }
 }
 
+void DungeonDB::EditObjectXYZ(uint32 objectID, double x, double y, double z)
+{
+    DBerror err;
 
+    if (!sDatabase.RunQuery(err, "UPDATE dunRoomObjects SET x = %f, y = %f, z = %f WHERE objectID = %u", x, y, z, objectID))
+        _log(DATABASE__ERROR, "Cannot update object's %u coordinates to %f, %f, %f", objectID, x, y, z);
+}
+
+void DungeonDB::EditObjectRadius(uint32 objectID, double radius)
+{
+    DBerror err;
+
+    if (!sDatabase.RunQuery(err, "UPDATE dunRoomObjects SET radius = %f WHERE objectID = %u", radius, objectID))
+        _log(DATABASE__ERROR, "Cannot update object's %u radius to %f", objectID, radius);
+}
+
+void DungeonDB::EditObjectYawPitchRoll(uint32 objectID, double yaw, double pitch, double roll)
+{
+    DBerror err;
+
+    if (!sDatabase.RunQuery(err, "UPDATE dunRoomObjects SET yaw = %f, pitch = %f, roll = %f WHERE objectID = %u", yaw, pitch, roll, objectID))
+        _log(DATABASE__ERROR, "Cannot update object's %u rotation to %f, %f, %f", objectID, yaw, pitch, roll);
+}

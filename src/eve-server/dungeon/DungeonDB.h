@@ -27,6 +27,9 @@ public:
     static void GetGroups(DBQueryResult& res);
     static void GetRoomObjects(uint32 roomID, std::vector< Dungeon::RoomObject >& into);
     static PyRep* GetRoomGroups(uint32 roomID);
+    static void EditObjectXYZ(uint32 objectID, double x, double y, double z);
+    static void EditObjectRadius(uint32 objectID, double radius);
+    static void EditObjectYawPitchRoll(uint32 objectID, double yaw, double pitch, double roll);
 
 protected:
 

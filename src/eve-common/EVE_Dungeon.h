@@ -178,6 +178,7 @@ namespace Dungeon {
     };
 
     struct RoomObject {
+        uint32 objectID;
         uint32 roomID;
         uint16 typeID;
         uint16 groupID;

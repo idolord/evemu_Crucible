@@ -66,6 +66,7 @@ UPDATE dunGroups g
     END, "_(legacy)");
 
 CREATE TABLE dunRoomObjects (
+    objectID INT(10) NOT NULL AUTO_INCREMENT,
     roomID INT(10) NOT NULL,
     typeID INT(10) NOT NULL,
     groupID INT(10) NOT NULL,
@@ -75,7 +76,9 @@ CREATE TABLE dunRoomObjects (
     yaw DOUBLE NOT NULL DEFAULT 0,
     pitch DOUBLE NOT NULL DEFAULT 0,
     roll DOUBLE NOT NULL DEFAULT 0,
-    radius INT(11) NOT NULL DEFAULT 0);
+    radius INT(11) NOT NULL DEFAULT 0,
+    PRIMARY KEY(objectID)
+);
 
 -- +migrate Down
 ALTER TABLE dunTemplates

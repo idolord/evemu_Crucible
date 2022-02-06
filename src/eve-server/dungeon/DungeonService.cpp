@@ -170,9 +170,26 @@ PyResult DungeonService::Handle_EditObjectName( PyCallArgs& call )
 
 PyResult DungeonService::Handle_EditObjectRadius( PyCallArgs& call )
 {
-    //sm.RemoteSvc('dungeon').EditObjectRadius(objectID=objectID, radius=radius)
     _log(DUNG__CALL,  "DungeonService::Handle_EditObjectRadius  size: %li", call.tuple->size());
     call.Dump(DUNG__CALL_DUMP);
+
+    // call.byname["dungeonID"]->AsInt()->value()
+    uint32 itemID = call.byname["objectID"]->AsInt()->value();
+    double radius = call.byname["radius"]->AsFloat()->value();
+
+    SystemEntity* entity = call.client->SystemMgr()->GetEntityByID(itemID);
+
+    if (entity->IsDungeonEditSE() == false) {
+        call.client->SendErrorMsg("The selected object is not part of the current dungeon");
+        return nullptr;
+    }
+
+    DungeonEditSE* dungeonEntity = entity->GetDungeonEditSE();
+
+    // TODO: IMPLEMENT DESTINY UPDATE FOR RADIUS
+
+    // save the position to the database
+    DungeonDB::EditObjectRadius(dungeonEntity->GetData().objectID, radius);
 
     return nullptr;
 }
@@ -183,14 +200,56 @@ PyResult DungeonService::Handle_EditObjectXYZ( PyCallArgs& call )
     _log(DUNG__CALL,  "DungeonService::Handle_EditObjectXYZ  size: %li", call.tuple->size());
     call.Dump(DUNG__CALL_DUMP);
 
+    // call.byname["dungeonID"]->AsInt()->value()
+    uint32 itemID = call.byname["objectID"]->AsInt()->value();
+    double x = call.byname["x"]->AsFloat()->value();
+    double y = call.byname["y"]->AsFloat()->value();
+    double z = call.byname["z"]->AsFloat()->value();
+
+    SystemEntity* entity = call.client->SystemMgr()->GetEntityByID(itemID);
+
+    if (entity->IsDungeonEditSE() == false) {
+        call.client->SendErrorMsg("The selected object is not part of the current dungeon");
+        return nullptr;
+    }
+
+    DungeonEditSE* dungeonEntity = entity->GetDungeonEditSE();
+
+    GPoint position = {x, y, z};
+
+    dungeonEntity->DestinyMgr()->SetPosition(position, true);
+
+    // save the position to the database
+    DungeonDB::EditObjectXYZ(dungeonEntity->GetData().objectID, x, y, z);
+
     return nullptr;
 }
 
 PyResult DungeonService::Handle_EditObjectYawPitchRoll( PyCallArgs& call )
 {
-    //sm.RemoteSvc('dungeon').EditObjectYawPitchRoll(objectID=objectID, yaw=yaw, pitch=pitch, roll=roll)
-    _log(DUNG__CALL,  "DungeonService::Handle_EditObjectYawPitchRoll size: %li", call.tuple->size());
+    //sm.RemoteSvc('dungeon').EditObjectXYZ(objectID=objectID, yaw=yaw, pitch=pitch, roll=roll)
+    _log(DUNG__CALL,  "DungeonService::Handle_EditObjectYawPitchRoll  size: %li", call.tuple->size());
     call.Dump(DUNG__CALL_DUMP);
+
+    // call.byname["dungeonID"]->AsInt()->value()
+    uint32 itemID = call.byname["objectID"]->AsInt()->value();
+    double yaw = call.byname["yaw"]->AsFloat()->value();
+    double pitch = call.byname["pitch"]->AsFloat()->value();
+    double roll = call.byname["roll"]->AsFloat()->value();
+
+    SystemEntity* entity = call.client->SystemMgr()->GetEntityByID(itemID);
+
+    if (entity->IsDungeonEditSE() == false) {
+        call.client->SendErrorMsg("The selected object is not part of the current dungeon");
+        return nullptr;
+    }
+
+    DungeonEditSE* dungeonEntity = entity->GetDungeonEditSE();
+
+    // TODO: ADD SUPPORT FOR YAW, PITCH AND ROLL UPDATE
+
+    // save the position to the database
+    DungeonDB::EditObjectYawPitchRoll(dungeonEntity->GetData().objectID, yaw, pitch, roll);
 
     return nullptr;
 }

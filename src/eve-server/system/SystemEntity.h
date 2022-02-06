@@ -649,6 +649,7 @@ public:
 
     virtual PyDict*             MakeSlimItem();
 
+private:
     Dungeon::RoomObject m_data;
 
 };
