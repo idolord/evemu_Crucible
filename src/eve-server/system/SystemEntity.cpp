@@ -832,9 +832,9 @@ void DynamicSystemEntity::AwardBounty(Client* pClient)
 }
 
 DungeonEditSE::DungeonEditSE(InventoryItemRef self, PyServiceMgr& services, SystemManager* system, Dungeon::RoomObject data)
-: ItemSystemEntity(self, services, system)
+: ObjectSystemEntity(self, services, system),
+    m_data(data)
 {
-    m_data = data;
 }
 
 PyDict* DungeonEditSE::MakeSlimItem()

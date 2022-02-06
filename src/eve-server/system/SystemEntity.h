@@ -632,7 +632,7 @@ private:
     bool m_frozen;
 };
 
-class DungeonEditSE : public ItemSystemEntity {
+class DungeonEditSE : public ObjectSystemEntity{
 public:
     DungeonEditSE(InventoryItemRef self, PyServiceMgr &services, SystemManager* system, Dungeon::RoomObject data);
     virtual ~DungeonEditSE()                                { /* Do nothing here */ }

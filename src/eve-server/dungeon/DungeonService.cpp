@@ -215,9 +215,19 @@ PyResult DungeonService::Handle_EditObjectXYZ( PyCallArgs& call )
 
     DungeonEditSE* dungeonEntity = entity->GetDungeonEditSE();
 
-    GPoint position = {x, y, z};
+    // calculate the new position first
+    GPoint roomPos = call.client->GetShipSE()->GetPosition();
 
-    dungeonEntity->DestinyMgr()->SetPosition(position, true);
+    // set the new, correct position in space
+    dungeonEntity->DestinyMgr()->SetPosition({
+        roomPos.x + x,
+        roomPos.y + y,
+        roomPos.z + z
+    });
+
+    // make sure state is sent, this should call the correct flow in the client to update the item
+    call.client->SetStateSent(false);
+    call.client->GetShipSE()->DestinyMgr()->SendSetState();
 
     // save the position to the database
     DungeonDB::EditObjectXYZ(dungeonEntity->GetData().objectID, x, y, z);
