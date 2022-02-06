@@ -173,7 +173,6 @@ PyResult DungeonService::Handle_EditObjectRadius( PyCallArgs& call )
     _log(DUNG__CALL,  "DungeonService::Handle_EditObjectRadius  size: %li", call.tuple->size());
     call.Dump(DUNG__CALL_DUMP);
 
-    // call.byname["dungeonID"]->AsInt()->value()
     uint32 itemID = call.byname["objectID"]->AsInt()->value();
     double radius = call.byname["radius"]->AsFloat()->value();
 
@@ -186,7 +185,7 @@ PyResult DungeonService::Handle_EditObjectRadius( PyCallArgs& call )
 
     DungeonEditSE* dungeonEntity = entity->GetDungeonEditSE();
 
-    // TODO: IMPLEMENT DESTINY UPDATE FOR RADIUS
+    dungeonEntity->DestinyMgr()->SetRadius(radius, true);
 
     // save the position to the database
     DungeonDB::EditObjectRadius(dungeonEntity->GetData().objectID, radius);
@@ -196,11 +195,9 @@ PyResult DungeonService::Handle_EditObjectRadius( PyCallArgs& call )
 
 PyResult DungeonService::Handle_EditObjectXYZ( PyCallArgs& call )
 {
-    //sm.RemoteSvc('dungeon').EditObjectXYZ(objectID=objectID, x=x, y=y, z=z)
     _log(DUNG__CALL,  "DungeonService::Handle_EditObjectXYZ  size: %li", call.tuple->size());
     call.Dump(DUNG__CALL_DUMP);
 
-    // call.byname["dungeonID"]->AsInt()->value()
     uint32 itemID = call.byname["objectID"]->AsInt()->value();
     double x = call.byname["x"]->AsFloat()->value();
     double y = call.byname["y"]->AsFloat()->value();
@@ -225,10 +222,6 @@ PyResult DungeonService::Handle_EditObjectXYZ( PyCallArgs& call )
         roomPos.z + z
     });
 
-    // make sure state is sent, this should call the correct flow in the client to update the item
-    call.client->SetStateSent(false);
-    call.client->GetShipSE()->DestinyMgr()->SendSetState();
-
     // save the position to the database
     DungeonDB::EditObjectXYZ(dungeonEntity->GetData().objectID, x, y, z);
 
@@ -237,11 +230,9 @@ PyResult DungeonService::Handle_EditObjectXYZ( PyCallArgs& call )
 
 PyResult DungeonService::Handle_EditObjectYawPitchRoll( PyCallArgs& call )
 {
-    //sm.RemoteSvc('dungeon').EditObjectXYZ(objectID=objectID, yaw=yaw, pitch=pitch, roll=roll)
     _log(DUNG__CALL,  "DungeonService::Handle_EditObjectYawPitchRoll  size: %li", call.tuple->size());
     call.Dump(DUNG__CALL_DUMP);
 
-    // call.byname["dungeonID"]->AsInt()->value()
     uint32 itemID = call.byname["objectID"]->AsInt()->value();
     double yaw = call.byname["yaw"]->AsFloat()->value();
     double pitch = call.byname["pitch"]->AsFloat()->value();

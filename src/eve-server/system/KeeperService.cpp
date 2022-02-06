@@ -70,6 +70,8 @@ public:
         PyCallable_REG_CALL(KeeperBound, GetRoomObjects);
         PyCallable_REG_CALL(KeeperBound, GetRoomGroups);
         PyCallable_REG_CALL(KeeperBound, ObjectSelection);
+        PyCallable_REG_CALL(KeeperBound, BatchStart);
+        PyCallable_REG_CALL(KeeperBound, BatchEnd);
 
     }
     virtual ~KeeperBound() { delete m_dispatch; }
@@ -86,13 +88,17 @@ public:
     PyCallable_DECL_CALL(GetRoomObjects);
     PyCallable_DECL_CALL(GetRoomGroups);
     PyCallable_DECL_CALL(ObjectSelection);
+    PyCallable_DECL_CALL(BatchStart);
+    PyCallable_DECL_CALL(BatchEnd);
 
 protected:
     SystemDB *const m_db;
     Dispatcher *const m_dispatch;   //we own this
 
 private:
-    std::vector<DungeonEditSE*> curRoomObjects;
+    uint32 m_currentDungeon;
+    uint32 m_currentRoom;
+    std::vector<DungeonEditSE*> m_roomObjects;
     std::vector<int32> m_selectedObjects;
 };
 
@@ -223,7 +229,7 @@ PyResult KeeperBound::Handle_EditDungeon(PyCallArgs &call)
             continue;
         DungeonEditSE* oSE;
         oSE = new DungeonEditSE(iRef, *(m_manager), pClient->SystemMgr(), cur);
-        curRoomObjects.push_back(oSE);
+        m_roomObjects.push_back(oSE);
         pClient->SystemMgr()->AddEntity(oSE, false);
     }
 
@@ -239,6 +245,10 @@ PyResult KeeperBound::Handle_EditDungeon(PyCallArgs &call)
     payload->SetItem(2, new PyObject("util.KeyVal", posKeyVal)); //roomPos
 
     pClient->SendNotification("OnDungeonEdit", "charid", payload, false);
+
+    // update local variables with what we're editing right now
+    this->m_currentRoom = call.byname["roomID"]->AsInt()->value();
+    this->m_currentDungeon = args.arg;
 
     return nullptr;
 }
@@ -261,7 +271,7 @@ PyResult KeeperBound::Handle_GetRoomObjects(PyCallArgs &call)
 
     CRowSet *rowset = new CRowSet(&header);
 
-    for (auto cur : curRoomObjects) {
+    for (auto cur : m_roomObjects) {
         PyPackedRow *newRow = rowset->NewRow();
         newRow->SetField("objectID", new PyInt(cur->GetID()));
         newRow->SetField("groupID", new PyInt(cur->GetData().groupID));
@@ -298,6 +308,18 @@ PyResult KeeperBound::Handle_Reset(PyCallArgs &call)
 {
     _log(DUNG__CALL,  "KeeperBound::Handle_Reset  size: %li", call.tuple->size());
     call.Dump(DUNG__CALL_DUMP);
+
+    if (this->m_roomObjects.size())
+        // reset means unload everything
+        for (auto cur : m_roomObjects)
+            cur->Delete();
+
+    // empty the list
+    this->m_roomObjects.clear();
+
+    // make sure state is sent, this should call the correct flow in the client to update the item
+    call.client->SetStateSent(false);
+    call.client->GetShipSE()->DestinyMgr()->SendSetState();
 
     return nullptr;
 }
@@ -343,4 +365,21 @@ PyResult KeeperBound::Handle_ObjectSelection(PyCallArgs &call)
     PySafeDecRef(data);
 
     return result;
+}
+
+PyResult KeeperBound::Handle_BatchStart(PyCallArgs &call)
+{
+    // nothing needed for now
+    // might be used by CCP to lock selected items or something
+    return nullptr;
+}
+
+PyResult KeeperBound::Handle_BatchEnd(PyCallArgs &call)
+{
+    // make sure state is sent, this should call the correct flow in the client to update the item
+    call.client->SetStateSent(false);
+    call.client->GetShipSE()->DestinyMgr()->SendSetState();
+
+    // send new set state to the client
+    return nullptr;
 }

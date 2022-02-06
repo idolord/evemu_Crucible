@@ -2289,6 +2289,22 @@ void DestinyManager::SetPosition(const GPoint &pt, bool update /*false*/) {
     }
 }
 
+void DestinyManager::SetRadius(double radius, bool update /*false*/) {
+    _log(DESTINY__TRACE, "Destiny::SetPosition() called by %s(%u)", mySE->GetName(), mySE->GetID());
+
+    m_radius = radius;
+
+    mySE->SetRadius(m_radius);
+
+    if (update) {
+        SetBallRadius du;
+        du.entityID = mySE->GetID();
+        du.radius = m_radius;
+        PyTuple* up = du.Encode();
+        SendSingleDestinyUpdate(&up);   // consumed
+    }
+}
+
 // settings for ship, npc and missile max speeds
 void DestinyManager::SetMaxVelocity(float maxVelocity)
 {
